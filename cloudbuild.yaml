@@ -5,10 +5,10 @@ steps:
     args:
       - '-c'
       - |
-        echo "${_DOCKER_PASSWORD}" | docker login -u "${_DOCKER_USERNAME}" --password-stdin
-    secretEnv:
-      - '_DOCKER_USERNAME'
-      - '_DOCKER_PASSWORD'
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    env:
+      - 'DOCKER_USERNAME=${_DOCKER_USERNAME}'
+      - 'DOCKER_PASSWORD=${_DOCKER_PASSWORD}'
 
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
@@ -24,7 +24,7 @@ steps:
     args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
 
   # Step 4: Deploy the Docker image to Cloud Run
-  - name: 'docker.io/cloud-builders/gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
@@ -39,15 +39,6 @@ options:
 
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
-
-secrets:
-  - name: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
-    secretEnv:
-      _DOCKER_USERNAME: 'ganshekar'
-
-  - name: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
-    secretEnv:
-      _DOCKER_PASSWORD: 'Ganshekar@1991'
 
 substitutions:
   _DOCKER_USERNAME: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
