@@ -1,11 +1,11 @@
 steps:
-  # Step 0: Authenticate Docker Hub using environment variables
+  # Step 0: Authenticate Docker Hub using substitutions
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
 
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
@@ -21,7 +21,7 @@ steps:
     args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
 
   # Step 4: Deploy the Docker image to Cloud Run
-  - name: 'docker.io/cloud-builders/gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
@@ -37,6 +37,6 @@ options:
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
-env:
-  - 'DOCKER_USERNAME=ganshekar'
-  - 'DOCKER_PASSWORD=Ganshekar@1991'
+substitutions:
+  _DOCKER_USERNAME: 'raaajhganshekar@gmail.com'
+  _DOCKER_PASSWORD: 'Ganshekar@1991'
