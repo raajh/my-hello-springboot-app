@@ -7,8 +7,29 @@ steps:
       - |
         echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
-  # Steps 1-4: Your existing build and deployment steps
-  ...
+  # Step 1: Build the Spring Boot application
+  - name: 'maven:3.8.4-openjdk-11'
+    entrypoint: 'mvn'
+    args: ['clean', 'install']
+
+  # Step 2: Build the Docker image
+  - name: 'docker'
+    args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
+
+  # Step 3: Push the Docker image to Docker Hub
+  - name: 'docker'
+    args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
+
+  # Step 4: Deploy the Docker image to Cloud Run
+  - name: 'docker.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'my-springboot-app'
+      - '--image=docker.io/ganshekar/my-springboot-app:$COMMIT_SHA'
+      - '--platform=managed'
+      - '--region=us-central1'
+      - '--allow-unauthenticated'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -17,9 +38,9 @@ images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
 secrets:
-  - name: 'docker-Username'  # Corrected to lowercase 'docker-username'
+  - name: 'docker-username'
     secretEnv:
-      DOCKER_USERNAME: 'docker-UserName'  # Use lowercase 'docker-username' as defined in Secret Manager
+      DOCKER_USERNAME: 'docker-UserName'  # Replace with your secret name from Secret Manager
   - name: 'docker-password'
     secretEnv:
-      DOCKER_PASSWORD: 'docker-password'
+      DOCKER_PASSWORD: 'docker-password'  # Replace with your secret name from Secret Manager
