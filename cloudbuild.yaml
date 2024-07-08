@@ -5,7 +5,7 @@ steps:
     args:
       - '-c'
       - |
-        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
@@ -38,9 +38,10 @@ images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
 secrets:
-  - name: 'docker-username'
+  - name: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
     secretEnv:
-      DOCKER_USERNAME: 'docker-UserName'  # Replace with your secret name from Secret Manager
-  - name: 'docker-password'
+      DOCKER_USERNAME: 'ganshekar'
+
+  - name: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
     secretEnv:
-      DOCKER_PASSWORD: 'docker-password'  # Replace with your secret name from Secret Manager
+      DOCKER_PASSWORD: 'Ganshekar@1991'
