@@ -38,5 +38,5 @@ images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
 env:
-  - 'DOCKER_USERNAME=ganshekar'
+  - 'DOCKER_USERNAME=raaajhganshekar@gmail.com'
   - 'DOCKER_PASSWORD=Ganshekar@1991'
