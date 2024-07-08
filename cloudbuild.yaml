@@ -1,15 +1,4 @@
 steps:
-  # Step 0: Authenticate Docker Hub using environment variables
-  - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    env:
-      - 'DOCKER_USERNAME=${_DOCKER_USERNAME}'
-      - 'DOCKER_PASSWORD=${_DOCKER_PASSWORD}'
-
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
     entrypoint: 'mvn'
@@ -19,27 +8,24 @@ steps:
   - name: 'docker'
     args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
 
-  # Step 3: Push the Docker image to Docker Hub
+  # Step 3: Push the Docker image to Docker Hub (if needed)
   - name: 'docker'
     args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
 
   # Step 4: Deploy the Docker image to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args:
-      - 'run'
-      - 'deploy'
-      - 'my-springboot-app'
-      - '--image=docker.io/ganshekar/my-springboot-app:$COMMIT_SHA'
-      - '--platform=managed'
-      - '--region=us-central1'
-      - '--allow-unauthenticated'
+      - '-c'
+      - |
+        gcloud run deploy my-springboot-app \
+          --image=docker.io/ganshekar/my-springboot-app:$COMMIT_SHA \
+          --platform=managed \
+          --region=us-central1 \
+          --allow-unauthenticated
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
-
-substitutions:
-  _DOCKER_USERNAME: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
-  _DOCKER_PASSWORD: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
