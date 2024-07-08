@@ -17,9 +17,9 @@ images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
 secrets:
-  - name: 'docker-UserName'
+  - name: 'docker-Username'  # Corrected to lowercase 'docker-username'
     secretEnv:
-      DOCKER_USERNAME: 'docker-UserName'
+      DOCKER_USERNAME: 'docker-UserName'  # Use lowercase 'docker-username' as defined in Secret Manager
   - name: 'docker-password'
     secretEnv:
       DOCKER_PASSWORD: 'docker-password'
