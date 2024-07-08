@@ -1,11 +1,11 @@
 steps:
-  # Step 0: Authenticate Docker Hub using secrets
+  # Step 0: Authenticate Docker Hub using environment variables
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
@@ -37,11 +37,6 @@ options:
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
-secrets:
-  - name: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
-    secretEnv:
-      DOCKER_USERNAME: 'docker-username'
-
-  - name: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
-    secretEnv:
-      DOCKER_PASSWORD: 'docker-password'
+env:
+  - 'DOCKER_USERNAME=ganshekar'
+  - 'DOCKER_PASSWORD=Ganshekar@1991'
