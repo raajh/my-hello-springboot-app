@@ -6,6 +6,9 @@ steps:
       - '-c'
       - |
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    env:
+      - 'DOCKER_USERNAME=raaajhganshekar@gmail.com'
+      - 'DOCKER_PASSWORD=Ganshekar@1991'
 
   # Step 1: Build the Spring Boot application
   - name: 'maven:3.8.4-openjdk-11'
@@ -36,7 +39,3 @@ options:
 
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
-
-env:
-  - 'DOCKER_USERNAME=raaajhganshekar@gmail.com'
-  - 'DOCKER_PASSWORD=Ganshekar@1991'
