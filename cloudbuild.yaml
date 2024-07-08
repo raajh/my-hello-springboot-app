@@ -40,6 +40,15 @@ options:
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
 
+secrets:
+  - name: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
+    secretEnv:
+      _DOCKER_USERNAME: 'ganshekar'
+
+  - name: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
+    secretEnv:
+      _DOCKER_PASSWORD: 'Ganshekar@1991'
+
 substitutions:
-  _DOCKER_USERNAME: 'ganshekar'
-  _DOCKER_PASSWORD: 'Ganshekar@1991'
+  _DOCKER_USERNAME: 'projects/ds-ms-microservices/secrets/docker-username/versions/latest'
+  _DOCKER_PASSWORD: 'projects/ds-ms-microservices/secrets/docker-password/versions/latest'
