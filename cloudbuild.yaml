@@ -1,30 +1,25 @@
 steps:
-  # Step 1: Build the Spring Boot application
-  - name: 'maven:3.8.4-openjdk-11'
-    entrypoint: 'mvn'
-    args: ['clean', 'install']
-
-  # Step 2: Build the Docker image
-  - name: 'docker'
-    args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
-
-  # Step 3: Push the Docker image to Docker Hub
-  - name: 'docker'
-    args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
-
-  # Step 4: Deploy the Docker image to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Step 0: Authenticate Docker Hub using secrets
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
     args:
-      - 'run'
-      - 'deploy'
-      - 'my-springboot-app'
-      - '--image=docker.io/ganshekar/my-springboot-app:$COMMIT_SHA'
-      - '--platform=managed'
-      - '--region=us-central1'
-      - '--allow-unauthenticated'
+      - '-c'
+      - |
+        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+  # Steps 1-4: Your existing build and deployment steps
+  ...
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
+
+secrets:
+  - name: 'docker-UserName'
+    secretEnv:
+      DOCKER_USERNAME: 'docker-UserName'
+  - name: 'docker-password'
+    secretEnv:
+      DOCKER_PASSWORD: 'docker-password'
