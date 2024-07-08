@@ -12,9 +12,9 @@ steps:
     entrypoint: 'mvn'
     args: ['clean', 'install']
 
-  # Step 2: Build the Docker image
+  # Step 2: Build the Docker image (force no cache)
   - name: 'docker'
-    args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
+    args: ['build', '--no-cache', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
 
   # Step 3: Push the Docker image to Docker Hub
   - name: 'docker'
