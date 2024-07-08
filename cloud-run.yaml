@@ -1,0 +1,12 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: my-spring-boot-app
+spec:
+  template:
+    spec:
+      containers:
+        - image: gcr.io/ds-ms-microservices/my-spring-boot-app:$COMMIT_SHA
+          ports:
+            - containerPort: 8080
+      timeoutSeconds: 300

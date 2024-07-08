@@ -1,0 +1,27 @@
+steps:
+  # Step 1: Build the Spring Boot application
+  - name: 'maven:3.8.4-openjdk-11'
+    entrypoint: 'mvn'
+    args: ['clean', 'install']
+
+  # Step 2: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
+
+  # Step 3: Push the Docker image to Docker Hub
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
+
+  # Step 4: Deploy the Docker image to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'my-springboot-app'
+      - '--image=ganshekar/my-springboot-app:$COMMIT_SHA'
+      - '--platform=managed'
+      - '--region=us-central1'
+      - '--allow-unauthenticated'
+
+images:
+  - 'ganshekar/my-springboot-app:$COMMIT_SHA'
