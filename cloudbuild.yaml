@@ -14,7 +14,7 @@ steps:
     args:
       - '-c'
       - |
-        echo "$$DOCKER_HUB_PASSWORD" | docker login -u "$$DOCKER_HUB_USERNAME" --password-stdin
+        echo "$_DOCKER_HUB_PASSWORD" | docker login -u "$_DOCKER_HUB_USERNAME" --password-stdin
 
   # Step 4: Push the Docker image to Docker Hub
   - name: 'gcr.io/cloud-builders/docker'
