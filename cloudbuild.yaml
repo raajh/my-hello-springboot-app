@@ -5,16 +5,22 @@ steps:
     args: ['clean', 'install']
 
   # Step 2: Build the Docker image
-  - name: 'docker'
+  - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'ganshekar/my-springboot-app:$COMMIT_SHA', '.']
 
-  # Step 3: Push the Docker image to Docker Hub (if needed)
-  # This step assumes you have permissions to push to the Docker Hub repository.
-  # If it's a public repository, authentication is not required.
-  - name: 'docker'
+  # Step 3: Log in to Docker Hub
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "$$DOCKER_HUB_PASSWORD" | docker login -u "$$DOCKER_HUB_USERNAME" --password-stdin
+
+  # Step 4: Push the Docker image to Docker Hub
+  - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'ganshekar/my-springboot-app:$COMMIT_SHA']
 
-  # Step 4: Deploy the Docker image to Cloud Run or another service
+  # Step 5: Deploy the Docker image to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -30,3 +36,7 @@ options:
 
 images:
   - 'ganshekar/my-springboot-app:$COMMIT_SHA'
+
+substitutions:
+  _DOCKER_HUB_USERNAME: 'ganshekar'
+  _DOCKER_HUB_PASSWORD: 'Ganshekar@1991'
