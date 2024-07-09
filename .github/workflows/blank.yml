@@ -1,0 +1,40 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master  # Adjust branch as needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Build Docker image
+      run: docker build -t my-spring-boot-app .
+      
+    - name: Log into Docker Hub
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push Docker image to Docker Hub
+      run: docker push my-spring-boot-app
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: ds-ms-microservices
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+      
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy my-spring-boot-app \
+          --image=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/my-springboot-app:latest\
+          --platform=managed \
+          --region=us-central1 \
+          --allow-unauthenticated
+
+    # Add more steps for testing or additional deployment configurations
