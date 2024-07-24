@@ -6,7 +6,7 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        PATH = "C:\\Program Files\\Apache\\apache-maven-3.9.8\\bin;C:\\Users\\Orcon\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin;C:\\Program Files\\Java\\jdk-17.0.11\\bin;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\WINDOWS\\System32;%PATH%"
+        MAVEN_HOME = "C:\\Program Files\\Apache\\apache-maven-3.9.8"
     }
 
     stages {
@@ -14,6 +14,7 @@ pipeline {
             steps {
                 script {
                     echo "PATH: ${env.PATH}"
+                    echo "MAVEN_HOME: ${env.MAVEN_HOME}"
                 }
                 bat 'where mvn'
                 bat 'mvn -v'
@@ -37,7 +38,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                bat '.\\mvnw clean package'
+                bat '"C:\\Program Files\\Apache\\apache-maven-3.9.8\\bin\\mvn" clean package'
             }
         }
 
