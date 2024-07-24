@@ -8,8 +8,7 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
     }
 
-
-  stages {
+    stages {
         stage('Check GitHub Connectivity') {
             steps {
                 script {
@@ -19,9 +18,6 @@ pipeline {
             }
         }
 
-
-    
-    stages {
         stage('Checkout') {
             steps {
                 git branch: 'master', url: 'https://github.com/raajh/my-hello-springboot-app.git'
@@ -42,8 +38,7 @@ pipeline {
             }
         }
 
-       
-stage('Push Docker Image') {
+        stage('Push Docker Image') {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
@@ -53,10 +48,6 @@ stage('Push Docker Image') {
             }
         }
 
-
-
-
-        
         stage('Deploy to GCP Cloud Run') {
             steps {
                 script {
