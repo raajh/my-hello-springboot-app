@@ -4,6 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
+        DOCKERHUB_USERNAME='ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
     }
 
