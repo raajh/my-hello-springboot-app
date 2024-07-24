@@ -4,6 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
     }
 
     stages {
@@ -38,9 +39,10 @@ pipeline {
 
         stage('Login to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-                    script {
-                        bat "echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USERNAME% --password-stdin"
+                script {
+                    // Login to DockerHub using Jenkins credentials
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                        echo 'Logged in to DockerHub'
                     }
                 }
             }
