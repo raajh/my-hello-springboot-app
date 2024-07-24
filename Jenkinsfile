@@ -38,15 +38,20 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        docker.image("${IMAGE_NAME}:latest").push()
-                    }
-                }
+
+       stage('Push Docker Image') {
+    steps {
+        script {
+            docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                def image = docker.image("${IMAGE_NAME}:latest")
+                image.push('latest') // Explicitly specify the tag to push
             }
         }
+    }
+}
+
+
+        
 
         stage('Deploy to GCP Cloud Run') {
             steps {
