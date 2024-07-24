@@ -8,6 +8,19 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
     }
 
+
+  stages {
+        stage('Check GitHub Connectivity') {
+            steps {
+                script {
+                    def response = sh(script: 'curl -I https://github.com', returnStdout: true).trim()
+                    echo "Response: ${response}"
+                }
+            }
+        }
+
+
+    
     stages {
         stage('Checkout') {
             steps {
