@@ -9,6 +9,15 @@ pipeline {
     }
 
     stages {
+        stage('Check PATH Variable') {
+            steps {
+                script {
+                    // Echo the PATH variable to verify it includes the desired directories
+                    bat 'echo %PATH%'
+                }
+            }
+        }
+
         stage('Check GitHub Connectivity') {
             steps {
                 script {
