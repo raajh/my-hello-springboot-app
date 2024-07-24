@@ -6,8 +6,8 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME='ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
-        CLOUD_RUN_SERVICE_NAME=my-spring-boot-app
-        REGION=us-central1
+       
+        
     }
 
     stages {
@@ -63,20 +63,20 @@ pipeline {
             }
         }
 
-    stage('Deploy to GCP Cloud Run') {
+ stage('Deploy to GCP Cloud Run') {
             steps {
                 script {
-                    // Deploy to Google Cloud Run
                     withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
-                        bat "echo %GCP_KEY_FILE% > keyfile.json"
-                        bat "gcloud auth activate-service-account --key-file=keyfile.json"
-                        bat "gcloud config set project ${PROJECT_ID}"
-                        bat "gcloud run deploy ${CLOUD_RUN_SERVICE_NAME} --image gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest --platform managed --region ${REGION} --allow-unauthenticated"
+                        bat '''
+                            echo %GCP_KEY_FILE% > keyfile.json
+                            gcloud auth activate-service-account --key-file=keyfile.json
+                            gcloud config set project %PROJECT_ID%
+                            gcloud run deploy my-springboot-app --image gcr.io/%PROJECT_ID%/${IMAGE_NAME}:latest --platform managed --region us-central1 --allow-unauthenticated
+                        '''
                     }
                 }
             }
         }
-    }
     post {
         always {
             cleanWs()
