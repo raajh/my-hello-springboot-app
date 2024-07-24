@@ -29,16 +29,23 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        docker.image("${IMAGE_NAME}:latest").push()
-                    }
-                }
+       
+
+stage('Push Docker Image') {
+    steps {
+        script {
+            docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                docker.image("my-spring-boot-app:latest").push("latest")
             }
         }
+    }
+}
 
+
+
+
+
+        
         stage('Deploy to GCP Cloud Run') {
             steps {
                 script {
