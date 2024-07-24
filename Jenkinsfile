@@ -38,6 +38,16 @@ pipeline {
             }
         }
 
+        stage('Login to DockerHub') {
+            steps {
+                script {
+                    // Login to DockerHub
+                    def loginOutput = bat(script: "echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin", returnStdout: true).trim()
+                    echo "DockerHub Login Output: ${loginOutput}"
+                }
+            }
+        }
+
         stage('Push Docker Image') {
             steps {
                 script {
