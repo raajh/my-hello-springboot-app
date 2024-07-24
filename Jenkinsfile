@@ -4,10 +4,8 @@ pipeline {
     environment {
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
-        DOCKERHUB_USERNAME='ganshekar'
+        DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
-       
-        
     }
 
     stages {
@@ -63,7 +61,7 @@ pipeline {
             }
         }
 
- stage('Deploy to GCP Cloud Run') {
+        stage('Deploy to GCP Cloud Run') {
             steps {
                 script {
                     withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
@@ -77,6 +75,8 @@ pipeline {
                 }
             }
         }
+    }
+
     post {
         always {
             cleanWs()
