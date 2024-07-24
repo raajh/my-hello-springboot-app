@@ -5,16 +5,19 @@ pipeline {
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
     }
 
     stages {
         stage('Check PATH Variable') {
             steps {
-                script {
-                    // Echo the PATH variable to verify it includes the desired directories
-                    bat 'echo %PATH%'
-                }
+                bat 'echo %PATH%'
+            }
+        }
+
+        stage('Check CMD Access') {
+            steps {
+                bat 'C:\\WINDOWS\\System32\\cmd.exe /c echo %PATH%'
             }
         }
 
@@ -50,7 +53,6 @@ pipeline {
         stage('Login to DockerHub') {
             steps {
                 script {
-                    // Login to DockerHub using Jenkins credentials
                     docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
                         echo 'Logged in to DockerHub'
                     }
@@ -61,10 +63,7 @@ pipeline {
         stage('Tag and Push Docker Image') {
             steps {
                 script {
-                    // Tag the image
                     bat "docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-                    
-                    // Push the image to DockerHub
                     bat "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
                 }
             }
