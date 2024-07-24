@@ -4,8 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
-        DOCKERHUB_USERNAME = 'ganshekar'
-        DOCKERHUB_PASSWORD = 'Ganshekar@1991'
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'  // Use credentials ID here
     }
 
     stages {
@@ -38,20 +37,20 @@ pipeline {
             }
         }
 
-        stage('Login to DockerHub') {
+          stage('Login to DockerHub') {
             steps {
                 script {
-                    // Login to DockerHub
-                    def loginOutput = bat(script: "echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin", returnStdout: true).trim()
-                    echo "DockerHub Login Output: ${loginOutput}"
+                    // Login to DockerHub using Jenkins credentials
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                        echo 'Logged in to DockerHub'
+                    }
                 }
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_USERNAME}:${DOCKERHUB_PASSWORD}") {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
                         def image = docker.image("${IMAGE_NAME}:latest")
                         image.push('latest') // Explicitly specify the tag to push
                     }
