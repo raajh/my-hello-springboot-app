@@ -1,0 +1,12 @@
+2024-07-24 11:18:06,098 [Worker-6: Loading available Gradle versions] INFO  o.e.b.c.i.u.g.PublishedGradleVersions - Gradle version information cache is out-of-date. Trying to update.
+2024-07-24 11:20:31,226 [Worker-9: Building] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: com.example:demo:0.0.1-SNAPSHOT @ C:\Users\Orcon\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\HelloWorld\demo\pom.xml.
+2024-07-24 11:20:42,073 [Worker-9: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 1 resource from src\main\resources to target\classes
+2024-07-24 11:20:42,108 [Worker-9: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 0 resource from src\main\resources to target\classes
+2024-07-24 11:20:42,116 [Worker-9: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - skip non existing resourceDirectory C:\Users\Orcon\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\HelloWorld\demo\src\test\resources
+2024-07-24 11:20:44,326 [Worker-7: Updating Maven Dependencies] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: com.example:demo:0.0.1-SNAPSHOT @ C:\Users\Orcon\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\HelloWorld\demo\pom.xml.
+2024-07-24 11:20:44,514 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 1 resource from src\main\resources to target\classes
+2024-07-24 11:20:44,580 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 0 resource from src\main\resources to target\classes
+2024-07-24 11:20:44,590 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - skip non existing resourceDirectory C:\Users\Orcon\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\HelloWorld\demo\src\test\resources
+2024-07-24 11:21:30,901 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 1 resource from src\main\resources to target\classes
+2024-07-24 11:21:30,912 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - Copying 0 resource from src\main\resources to target\classes
+2024-07-24 11:21:30,916 [Worker-3: Building] INFO  o.a.m.s.f.DefaultMavenResourcesFiltering - skip non existing resourceDirectory C:\Users\Orcon\Documents\workspace-spring-tool-suite-4-4.22.1.RELEASE\HelloWorld\demo\src\test\resources
