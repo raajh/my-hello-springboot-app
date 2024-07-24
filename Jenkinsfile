@@ -21,6 +21,12 @@ pipeline {
             }
         }
 
+        stage('Check Maven Path') {
+            steps {
+                bat 'where mvn'
+            }
+        }
+
         stage('Check GitHub Connectivity') {
             steps {
                 script {
@@ -38,7 +44,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                bat 'mvn clean package'
+                bat '.\\mvnw clean package'
             }
         }
 
