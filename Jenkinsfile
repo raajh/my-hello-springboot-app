@@ -10,21 +10,13 @@ pipeline {
     }
 
     stages {
-        stage('Check PATH Variable') {
+        stage('Debug PATH') {
             steps {
-                bat 'echo %PATH%'
-            }
-        }
-
-        stage('Check Maven Path') {
-            steps {
+                script {
+                    echo "PATH: ${env.PATH}"
+                }
                 bat 'where mvn'
-            }
-        }
-
-        stage('Check CMD Access') {
-            steps {
-                bat 'C:\\WINDOWS\\System32\\cmd.exe /c echo %PATH%'
+                bat 'mvn -v'
             }
         }
 
