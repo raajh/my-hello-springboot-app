@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        GCP_SERVICE_ACCOUNT_KEY = credentials('gcp-service-account-key')
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
+        DOCKERHUB_USERNAME = 'ganshekar'
+        DOCKERHUB_PASSWORD = 'Ganshekar@1991'
     }
 
     stages {
@@ -38,33 +38,20 @@ pipeline {
             }
         }
 
-
-       stage('Push Docker Image') {
-    steps {
-        script {
-            docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                def image = docker.image("${IMAGE_NAME}:latest")
-                image.push('latest') // Explicitly specify the tag to push
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_USERNAME}:${DOCKERHUB_PASSWORD}") {
+                        def image = docker.image("${IMAGE_NAME}:latest")
+                        image.push('latest') // Explicitly specify the tag to push
+                    }
+                }
             }
         }
-    }
-}
-
-
-        
 
         stage('Deploy to GCP Cloud Run') {
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
-                        bat '''
-                            echo %GCP_KEY_FILE% > keyfile.json
-                            gcloud auth activate-service-account --key-file=keyfile.json
-                            gcloud config set project %PROJECT_ID%
-                            gcloud run deploy my-springboot-app --image gcr.io/%PROJECT_ID%/${IMAGE_NAME}:latest --platform managed --region us-central1 --allow-unauthenticated
-                        '''
-                    }
-                }
+                echo 'Deploy to GCP Cloud Run stage is not using DockerHub credentials.'
             }
         }
     }
