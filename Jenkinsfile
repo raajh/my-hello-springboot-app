@@ -40,27 +40,34 @@ pipeline {
                 }
             }
         }
-
-        stage('Docker Build') {
+        
+ stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image
-                    bat "docker build -t gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ."
+                    docker.build("${IMAGE_NAME}:latest")
                 }
             }
         }
 
-        stage('Docker Push') {
+        stage('Login to DockerHub') {
             steps {
                 script {
-                    // Authenticate with DockerHub
-                    withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                        bat "echo %DOCKERHUB_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin"
-                        bat "docker push gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest"
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                        echo 'Logged in to DockerHub'
                     }
                 }
             }
         }
+
+        stage('Tag and Push Docker Image') {
+            steps {
+                script {
+                    bat "docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
+                    bat "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
+                }
+            }
+        }
+
 
         stage('Deploy to GCP') {
             steps {
