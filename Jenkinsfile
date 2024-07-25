@@ -1,61 +1,111 @@
-
 pipeline {
     agent any
 
     environment {
-        // Define environment variables
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Jenkins credentials ID for DockerHub
-        GCP_SERVICE_ACCOUNT_KEY = credentials('gcp-service-account-key') // Jenkins credentials ID for GCP service account
-        PROJECT_ID = 'ds-ms-microservices' // GCP project ID
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
+        PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
+        DOCKERHUB_USERNAME = 'ganshekar'
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the source code from the master branch
-                git branch: 'master', url: 'https://github.com/raajh/my-hello-springboot-app.git'
+                script {
+                    def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
+                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    git url: gitRepoUrl, branch: 'master'
+                }
             }
         }
 
         stage('Build') {
             steps {
-                // Build the Spring Boot application using Maven
-                sh './mvnw clean package'
+                script {
+                    bat 'mvn clean package'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    bat 'mvn test'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                // Build Docker image
                 script {
-                    docker.build("${IMAGE_NAME}:latest")
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                // Push the Docker image to DockerHub
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        docker.image("${IMAGE_NAME}:latest").push()
+                    retry(3) {
+                        try {
+                            bat 'echo Building Docker image...'
+                            bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
+                        } catch (Exception e) {
+                            error "Docker build failed: ${e.getMessage()}"
+                        }
                     }
                 }
             }
         }
 
-        stage('Deploy to GCP Cloud Run') {
+        stage('Login to DockerHub') {
             steps {
-                // Deploy the Docker image to GCP Cloud Run
                 script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
-                        sh '''
-                            echo $GCP_KEY_FILE > keyfile.json
-                            gcloud auth activate-service-account --key-file=keyfile.json
-                            gcloud config set project $PROJECT_ID
-                            gcloud run deploy my-springboot-app --image gcr.io/$PROJECT_ID/${IMAGE_NAME}:latest --platform managed --region us-central1 --allow-unauthenticated
+                    try {
+                        docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                            echo 'Logged in to DockerHub'
+                        }
+                    } catch (Exception e) {
+                        error "Docker login failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Login to GCR') {
+            steps {
+                script {
+                    try {
+                        bat 'gcloud auth configure-docker'
+                        echo 'Logged in to Google Container Registry'
+                    } catch (Exception e) {
+                        error "GCR login failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Tag and Push Docker Image') {
+            steps {
+                script {
+                    try {
+                        bat "docker tag ${IMAGE_NAME}:latest gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
+                        bat "docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
+                    } catch (Exception e) {
+                        error "Docker push failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to GCP') {
+            steps {
+                script {
+                    try {
+                        bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
+                        bat '''
+                            gcloud run deploy my-spring-boot-app ^
+                            --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
+                            --platform managed ^
+                            --region us-central1 ^
+                            --allow-unauthenticated ^
+                            --project %PROJECT_ID%
                         '''
+                    } catch (Exception e) {
+                        error "GCP deployment failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -63,8 +113,13 @@ pipeline {
     }
 
     post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
         always {
-            // Clean up workspace after the build
             cleanWs()
         }
     }
