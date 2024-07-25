@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     // Use Gradle to build the project (adjust as needed for Maven or other build tools)
-                    bat './gradlew build'
+                    bat 'gradlew.bat build'
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     // Run tests
-                    bat './gradlew test'
+                    bat 'gradlew.bat test'
                 }
             }
         }
