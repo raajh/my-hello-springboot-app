@@ -68,25 +68,25 @@ pipeline {
             }
         }
 
+stage('Deploy to GCP') {
+    steps {
+        script {
+            // Authenticate with GCP
+            bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
 
-        stage('Deploy to GCP') {
-            steps {
-                script {
-                    // Authenticate with GCP
-                    bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
-
-                    // Deploy the Docker image to Google Cloud Run
-                    bat '''
-                        gcloud run deploy my-spring-boot-app ^
-                        --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
-                        --platform managed ^
-                        --region your-region ^
-                        --allow-unauthenticated
-                    '''
-                }
-            }
+            // Deploy the Docker image to Google Cloud Run
+            bat '''
+                gcloud run deploy my-spring-boot-app ^
+                --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
+                --platform managed ^
+                --region your-region ^
+                --allow-unauthenticated ^
+                --project %PROJECT_ID%
+            '''
         }
     }
+}
+
 
     post {
         success {
