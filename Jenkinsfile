@@ -18,7 +18,7 @@ pipeline {
                     bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
                     
                     // Clone the repository
-                    git url: gitRepoUrl, branch: 'master'
+                    git url: gitRepoUrl, branch: 'main'
                 }
             }
         }
@@ -26,8 +26,8 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Use Gradle to build the project (adjust as needed for Maven or other build tools)
-                    bat 'gradlew.bat build'
+                    // Use Maven to build the project
+                    bat 'mvn clean package'
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     // Run tests
-                    bat 'gradlew.bat test'
+                    bat 'mvn test'
                 }
             }
         }
