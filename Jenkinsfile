@@ -18,7 +18,7 @@ pipeline {
                     bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
                     
                     // Clone the repository
-                    git url: gitRepoUrl, branch: 'main'
+                    git url: gitRepoUrl, branch: 'master'
                 }
             }
         }
