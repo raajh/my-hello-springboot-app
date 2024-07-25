@@ -62,18 +62,34 @@ pipeline {
             }
         }
 
-        stage('Tag and Push Docker Image') {
+        // stage('Tag and Push Docker Image') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 bat "docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
+        //                 bat "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
+        //             } catch (Exception e) {
+        //                 error "Docker push failed: ${e.getMessage()}"
+        //             }
+        //         }
+        //     }
+        // }
+
+
+  stage('Tag and Push Docker Image') {
             steps {
                 script {
-                    try {
-                        bat "docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-                        bat "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-                    } catch (Exception e) {
-                        error "Docker push failed: ${e.getMessage()}"
-                    }
+                    try{
+                    bat "docker tag ${IMAGE_NAME}:latest gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
+                    bat "docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
                 }
+                    catch (Exception e) {
+                      error "Docker push failed: ${e.getMessage()}"
+             }
+                    
             }
         }
+        
 
         stage('Deploy to GCP') {
             steps {
