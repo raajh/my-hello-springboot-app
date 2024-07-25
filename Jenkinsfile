@@ -84,7 +84,7 @@ pipeline {
                             gcloud run deploy my-spring-boot-app ^
                             --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
                             --platform managed ^
-                            --region your-region ^
+                            --region us-central1 ^
                             --allow-unauthenticated ^
                             --project %PROJECT_ID%
                         '''
