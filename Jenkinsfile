@@ -64,6 +64,24 @@ pipeline {
             }
         }
 
+
+stage('Login to GCR') {
+    steps {
+        script {
+            try {
+                bat 'gcloud auth configure-docker'
+                echo 'Logged in to Google Container Registry'
+            } catch (Exception e) {
+                error "GCR login failed: ${e.getMessage()}"
+            }
+        }
+    }
+}
+
+
+
+
+        
         stage('Tag and Push Docker Image') {
             steps {
                 script {
