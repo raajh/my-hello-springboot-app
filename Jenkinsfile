@@ -39,10 +39,12 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    try {
-                        docker.build("${IMAGE_NAME}:latest")
-                    } catch (Exception e) {
-                        error "Docker build failed: ${e.getMessage()}"
+                    retry(3) {
+                        try {
+                            docker.build("${IMAGE_NAME}:latest")
+                        } catch (Exception e) {
+                            error "Docker build failed: ${e.getMessage()}"
+                        }
                     }
                 }
             }
