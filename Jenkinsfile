@@ -41,7 +41,8 @@ pipeline {
                 script {
                     retry(3) {
                         try {
-                            docker.build("${IMAGE_NAME}:latest")
+                            bat 'echo Building Docker image...'
+                            bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
                         } catch (Exception e) {
                             error "Docker build failed: ${e.getMessage()}"
                         }
@@ -64,24 +65,19 @@ pipeline {
             }
         }
 
-
-stage('Login to GCR') {
-    steps {
-        script {
-            try {
-                bat 'gcloud auth configure-docker'
-                echo 'Logged in to Google Container Registry'
-            } catch (Exception e) {
-                error "GCR login failed: ${e.getMessage()}"
+        stage('Login to GCR') {
+            steps {
+                script {
+                    try {
+                        bat 'gcloud auth configure-docker'
+                        echo 'Logged in to Google Container Registry'
+                    } catch (Exception e) {
+                        error "GCR login failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
-    }
-}
 
-
-
-
-        
         stage('Tag and Push Docker Image') {
             steps {
                 script {
