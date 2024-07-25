@@ -2,88 +2,94 @@ pipeline {
     agent any
 
     environment {
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key') // Ensure this ID matches the one configured in Jenkins
         PROJECT_ID = 'ds-ms-microservices'
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        MAVEN_HOME = 'C:\\Program Files\\apache-maven-3.9.8'
-        PATH = "${env.MAVEN_HOME}\\bin;${env.PATH}"
     }
 
     stages {
-        stage('Check PATH Variable') {
-            steps {
-                bat 'echo %PATH%'
-            }
-        }
-
-        stage('Check GitHub Connectivity') {
-            steps {
-                script {
-                    def response = bat(script: 'curl -I https://github.com', returnStdout: true).trim()
-                    echo "Response: ${response}"
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/raajh/my-hello-springboot-app.git'
+                script {
+                    // Verify GitHub connectivity
+                    def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
+                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    
+                    // Clone the repository
+                    git url: gitRepoUrl, branch: 'master'
+                }
             }
         }
 
         stage('Build') {
             steps {
-                bat 'mvn clean package'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
                 script {
-                    docker.build("${IMAGE_NAME}:latest")
+                    // Use Gradle to build the project (adjust as needed for Maven or other build tools)
+                    bat './gradlew build'
                 }
             }
         }
 
-        stage('Login to DockerHub') {
+        stage('Test') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
-                        echo 'Logged in to DockerHub'
+                    // Run tests
+                    bat './gradlew test'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    // Build Docker image
+                    bat "docker build -t gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ."
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                script {
+                    // Authenticate with DockerHub
+                    withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                        bat "echo %DOCKERHUB_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin"
+                        bat "docker push gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest"
                     }
                 }
             }
         }
 
-        stage('Tag and Push Docker Image') {
+        stage('Deploy to GCP') {
             steps {
                 script {
-                    bat "docker tag ${IMAGE_NAME}:latest ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-                    bat "docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest"
-                }
-            }
-        }
+                    // Authenticate with GCP
+                    bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
 
-        stage('Deploy to GCP Cloud Run') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
-                        bat '''
-                            echo %GCP_KEY_FILE% > keyfile.json
-                            gcloud auth activate-service-account --key-file=keyfile.json
-                            gcloud config set project %PROJECT_ID%
-                            gcloud run deploy my-springboot-app --image gcr.io/%PROJECT_ID%/${IMAGE_NAME}:latest --platform managed --region us-central1 --allow-unauthenticated
-                        '''
-                    }
+                    // Deploy the Docker image to Google Cloud Run
+                    bat '''
+                        gcloud run deploy my-spring-boot-app ^
+                        --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
+                        --platform managed ^
+                        --region your-region ^
+                        --allow-unauthenticated
+                    '''
                 }
             }
         }
     }
 
     post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
         always {
-            cleanWs()
+            cleanWs()  // Clean workspace after build
         }
     }
 }
