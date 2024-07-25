@@ -14,7 +14,17 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
+                    
+                    // Check if the repository URL is reachable
+                    echo "Checking repository URL..."
                     bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    
+                    // Verify if Git can access the repository
+                    echo "Verifying Git access to the repository..."
+                    bat "git ls-remote ${gitRepoUrl}"
+                    
+                    // Perform the Git checkout
+                    echo "Performing Git checkout..."
                     git url: gitRepoUrl, branch: 'master'
                 }
             }
