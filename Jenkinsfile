@@ -10,6 +10,16 @@ pipeline {
     }
 
     stages {
+        stage('Test Connectivity') {
+            steps {
+                script {
+                    echo "Testing GitHub connectivity..."
+                    bat 'curl -I https://github.com'
+                    bat 'ping -n 4 github.com'
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 script {
