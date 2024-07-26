@@ -7,34 +7,17 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
+        VPC_NETWORK_NAME = 'portforward' // replace with your VPC network name
+        VPC_SUBNET_NAME = 'portforward8080' // replace with your subnet name
+        INSTANCE_NAME = 'instance1' // replace with your instance name
     }
 
     stages {
-        stage('Test Connectivity') {
-            steps {
-                script {
-                    echo "Testing GitHub connectivity..."
-                    bat 'curl -I https://github.com'
-                    bat 'ping -n 4 github.com'
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    
-                    // Check if the repository URL is reachable
-                    echo "Checking repository URL..."
                     bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                    
-                    // Verify if Git can access the repository
-                    echo "Verifying Git access to the repository..."
-                    bat "git ls-remote ${gitRepoUrl}"
-                    
-                    // Perform the Git checkout
-                    echo "Performing Git checkout..."
                     git url: gitRepoUrl, branch: 'master'
                 }
             }
@@ -106,6 +89,30 @@ pipeline {
                         bat "docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
                     } catch (Exception e) {
                         error "Docker push failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Setup VPC Port Forwarding') {
+            steps {
+                script {
+                    try {
+                        // Add commands to setup port forwarding using VPC
+                        bat """
+                            gcloud compute instances create ${INSTANCE_NAME} \
+                            --project=${PROJECT_ID} \
+                            --zone=us-central1-a \
+                            --machine-type=e2-micro \
+                            --subnet=${VPC_SUBNET_NAME} \
+                            --network=${VPC_NETWORK_NAME} \
+                            --tags=http-server,https-server \
+                            --image-family=debian-10 \
+                            --image-project=debian-cloud
+                        """
+                        echo 'VPC port forwarding setup completed'
+                    } catch (Exception e) {
+                        error "VPC port forwarding setup failed: ${e.getMessage()}"
                     }
                 }
             }
