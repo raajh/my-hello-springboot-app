@@ -81,21 +81,22 @@ pipeline {
             }
         }
 
-    stage('Transfer Docker Image to GCE') {
-    steps {
-        script {
-            try {
-                bat '''
-                    gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~ --zone=%ZONE% --project=%PROJECT_ID%
-                '''
-                echo 'Docker image transferred to GCE VM'
-            } catch (Exception e) {
-                error "Image transfer to GCE failed: ${e.getMessage()}"
+        stage('Transfer Docker Image to GCE') {
+            steps {
+                script {
+                    try {
+                        bat '''
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~ --zone=%ZONE% --project=%PROJECT_ID%
+                        '''
+                        echo 'Docker image transferred to GCE VM'
+                    } catch (Exception e) {
+                        error "Image transfer to GCE failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
-    }
-}
 
+        stage('Deploy Docker Image on GCE') {
             steps {
                 script {
                     try {
