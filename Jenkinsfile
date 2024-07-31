@@ -8,9 +8,8 @@ pipeline {
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
         INSTANCE_NAME = 'instance-2' // replace with your instance name
-        ZONE = 'us-central1-c' // replace with your GCE zone
+        ZONE = 'us-central1-a' // replace with your GCE zone
         PORT = '8080' // replace with your application's port
-        LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
     }
 
     stages {
@@ -55,64 +54,64 @@ pipeline {
             }
         }
 
-        stage('Save Docker Image') {
+        stage('Login to DockerHub') {
             steps {
                 script {
                     try {
-                        bat "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
-                        echo 'Docker image saved'
+                        docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                            echo 'Logged in to DockerHub'
+                        }
                     } catch (Exception e) {
-                        error "Saving Docker image failed: ${e.getMessage()}"
+                        error "Docker login failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
-        stage('Login to GCP') {
+        stage('Login to GCR') {
             steps {
                 script {
                     try {
-                        bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
-                        echo 'Authenticated with GCP'
+                        bat 'gcloud auth configure-docker'
+                        echo 'Logged in to Google Container Registry'
                     } catch (Exception e) {
-                        error "GCP authentication failed: ${e.getMessage()}"
+                        error "GCR login failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
-        stage('Transfer Docker Image to GCE') {
+        stage('Tag and Push Docker Image') {
             steps {
                 script {
                     try {
-                        bat '''
-                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~ --zone=%ZONE% --project=%PROJECT_ID%
-                        '''
-                        echo 'Docker image transferred to GCE VM'
+                        bat "docker tag ${IMAGE_NAME}:latest gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
+                        bat "docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest"
                     } catch (Exception e) {
-                        error "Image transfer to GCE failed: ${e.getMessage()}"
+                        error "Docker push failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
-        stage('Deploy Docker Image on GCE') {
-            steps {
-                script {
-                    try {
-                        // SSH into the VM and run Docker commands
-                        bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i ~/%LOCAL_IMAGE_PATH%"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
-                        '''
-                        echo 'Deployment to GCE completed'
-                    } catch (Exception e) {
-                        error "GCE deployment failed: ${e.getMessage()}"
-                    }
-                }
+      stage('Deploy Docker Image on GCE') {
+    steps {
+        script {
+            try {
+                // Set the project explicitly for the gcloud commands
+                bat '''
+                    gcloud config set project %PROJECT_ID%
+                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i ~/%LOCAL_IMAGE_PATH%"
+                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
+                '''
+                echo 'Deployment to GCE completed'
+            } catch (Exception e) {
+                error "GCE deployment failed: ${e.getMessage()}"
             }
         }
     }
+}
+
 
     post {
         success {
