@@ -87,7 +87,7 @@ pipeline {
                 script {
                     try {
                         bat '''
-                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~ --zone=%ZONE% --project=%PROJECT_ID%
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~/ --zone=%ZONE% --project=%PROJECT_ID%
                         '''
                         echo 'Docker image transferred to GCE VM'
                     } catch (Exception e) {
@@ -103,7 +103,7 @@ pipeline {
                     try {
                         // SSH into the VM and run Docker commands
                         bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i ~/%LOCAL_IMAGE_PATH%"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i ~/my-spring-boot-app.tar"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
                         echo 'Deployment to GCE completed'
