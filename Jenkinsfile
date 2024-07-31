@@ -7,9 +7,9 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        VPC_NETWORK_NAME = 'portforward' // replace with your VPC network name
-        VPC_SUBNET_NAME = 'portforward8080' // replace with your subnet name
-        INSTANCE_NAME = 'instance1' // replace with your instance name
+        INSTANCE_NAME = 'instance-2' // replace with your instance name
+        ZONE = 'us-central1-a' // replace with your GCE zone
+        PORT = '8080' // replace with your application's port
     }
 
     stages {
@@ -94,45 +94,33 @@ pipeline {
             }
         }
 
-        stage('Setup VPC Port Forwarding') {
+        stage('Deploy to GCE') {
             steps {
                 script {
                     try {
-                        // Add commands to setup port forwarding using VPC
-                        bat """
-                            gcloud compute instances create ${INSTANCE_NAME} \
-                            --project=${PROJECT_ID} \
-                            --zone=us-central1-a \
-                            --machine-type=e2-micro \
-                            --subnet=${VPC_SUBNET_NAME} \
-                            --network=${VPC_NETWORK_NAME} \
-                            --tags=http-server,https-server \
-                            --image-family=debian-10 \
-                            --image-project=debian-cloud
-                        """
-                        echo 'VPC port forwarding setup completed'
-                    } catch (Exception e) {
-                        error "VPC port forwarding setup failed: ${e.getMessage()}"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to GCP') {
-            steps {
-                script {
-                    try {
+                        // Authenticate with GCP
                         bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
+                        
+                        // Create a VM instance if it doesn't exist
                         bat '''
-                            gcloud run deploy my-spring-boot-app ^
-                            --image gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest ^
-                            --platform managed ^
-                            --region us-central1 ^
-                            --allow-unauthenticated ^
-                            --project %PROJECT_ID%
+                            gcloud compute instances create %INSTANCE_NAME% ^
+                            --project=%PROJECT_ID% ^
+                            --zone=%ZONE% ^
+                            --machine-type=e2-micro ^
+                            --image-family=debian-10 ^
+                            --image-project=debian-cloud ^
+                            --tags=http-server,https-server
                         '''
+                        
+                        // SSH into the VM and run Docker commands
+                        bat '''
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker pull gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% gcr.io/%PROJECT_ID%/%IMAGE_NAME%:latest"
+                        '''
+                        
+                        echo 'Deployment to GCE completed'
                     } catch (Exception e) {
-                        error "GCP deployment failed: ${e.getMessage()}"
+                        error "GCE deployment failed: ${e.getMessage()}"
                     }
                 }
             }
