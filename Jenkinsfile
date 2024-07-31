@@ -73,6 +73,7 @@ pipeline {
                 script {
                     try {
                         bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
+                        bat 'gcloud config set project %PROJECT_ID%'
                         echo 'Authenticated with GCP'
                     } catch (Exception e) {
                         error "GCP authentication failed: ${e.getMessage()}"
