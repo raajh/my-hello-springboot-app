@@ -11,6 +11,7 @@ pipeline {
         ZONE = 'us-central1-c' // replace with your GCE zone
         PORT = '8080' // replace with your application's port
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
+        REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
     }
 
     stages {
@@ -87,7 +88,7 @@ pipeline {
                 script {
                     try {
                         bat '''
-                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:~/ --zone=%ZONE% --project=%PROJECT_ID%
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
                         '''
                         echo 'Docker image transferred to GCE VM'
                     } catch (Exception e) {
@@ -103,7 +104,7 @@ pipeline {
                     try {
                         // SSH into the VM and run Docker commands
                         bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i ~/my-spring-boot-app.tar"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
                         echo 'Deployment to GCE completed'
