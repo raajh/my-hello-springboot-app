@@ -9,8 +9,9 @@ public class HelloWorldController {
     @GetMapping("/")
 
     public String helloWorld() {
-        return "Hello World! today is monday...and gani";
+        return "Hello World! today is monday...and ganni";
     }
 }
+
 
 
