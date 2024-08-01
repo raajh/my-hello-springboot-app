@@ -1,4 +1,4 @@
- pipeline {
+pipeline {
     agent any
 
     environment {
@@ -127,3 +127,4 @@
             cleanWs()
         }
     }
+} // Add this closing brace to properly close the pipeline block
