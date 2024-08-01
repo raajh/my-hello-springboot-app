@@ -8,7 +8,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
         INSTANCE_NAME = 'instance-2' // replace with your instance name
-        ZONE = 'us-central1-b' // replace with your GCE zone
+        ZONE = 'us-central1-c' // replace with your GCE zone
         PORT = '8080' // replace with your application's port
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
@@ -83,28 +83,73 @@ pipeline {
             }
         }
 
-
-
-stage('Transfer Docker Image to GCE') {
-    steps {
-        script {
-            try {
-                bat '''
-                    set CLOUDSDK_CORE_HTTP_TIMEOUT=600
-                    gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
-                '''
-                echo 'Docker image transferred to GCE VM'
-            } catch (Exception e) {
-                error "Image transfer to GCE failed: ${e.getMessage()}"
+        stage('Ensure VM Exists') {
+            steps {
+                script {
+                    try {
+                        def instanceExists = bat (
+                            script: "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}",
+                            returnStatus: true
+                        )
+                        if (instanceExists != 0) {
+                            echo 'VM instance does not exist. Creating VM instance...'
+                            bat '''
+                                gcloud compute instances create ${INSTANCE_NAME} \
+                                    --zone=${ZONE} \
+                                    --project=${PROJECT_ID} \
+                                    --machine-type=e2-medium \
+                                    --image-family=debian-10 \
+                                    --image-project=debian-cloud
+                            '''
+                            bat '''
+                                gcloud compute firewall-rules create allow-8080 \
+                                    --allow tcp:${PORT} \
+                                    --network default \
+                                    --source-ranges=0.0.0.0/0 \
+                                    --description="Allow port ${PORT} access"
+                            '''
+                        } else {
+                            echo 'VM instance already exists.'
+                        }
+                    } catch (Exception e) {
+                        error "VM creation failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
-    }
-}
 
+        stage('Install Docker on VM') {
+            steps {
+                script {
+                    try {
+                        echo 'Installing Docker on VM...'
+                        bat '''
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+                        '''
+                        echo 'Docker installed on VM'
+                    } catch (Exception e) {
+                        error "Docker installation failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
 
+        stage('Transfer Docker Image to GCE') {
+            steps {
+                script {
+                    try {
+                        bat '''
+                            set CLOUDSDK_CORE_HTTP_TIMEOUT=600
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
+                        '''
+                        echo 'Docker image transferred to GCE VM'
+                    } catch (Exception e) {
+                        error "Image transfer to GCE failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
 
-
-        
         stage('Deploy Docker Image on GCE') {
             steps {
                 script {
