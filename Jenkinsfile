@@ -135,37 +135,37 @@ pipeline {
             }
         }
 
-    stage('Deploy Docker Image on GCE') {
-    steps {
-        script {
-            try {
-                bat '''
-                    // Load Docker image
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
+        stage('Deploy Docker Image on GCE') {
+            steps {
+                script {
+                    try {
+                        bat '''
+                            // Load Docker image
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
 
-                    // Stop any running containers using the same image
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop $(sudo docker ps -q --filter 'ancestor=${IMAGE_NAME}:latest') || true"
+                            // Stop any running containers using the same image
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop $(sudo docker ps -q --filter 'ancestor=${IMAGE_NAME}:latest') || true"
 
-                    // Remove all stopped containers
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm $(sudo docker ps -a -q) || true"
+                            // Remove all stopped containers
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm $(sudo docker ps -a -q) || true"
 
-                    // Remove the old image if exists
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rmi $(sudo docker images -q ${IMAGE_NAME}:latest) || true"
+                            // Remove the old image if exists
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rmi $(sudo docker images -q ${IMAGE_NAME}:latest) || true"
 
-                    // Run the new container
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d --name my-spring-boot-app -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
+                            // Run the new container
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d --name my-spring-boot-app -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
 
-                    // Ensure the container is running
-                    gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker ps"
-                '''
-                echo 'Deployment to GCE completed'
-            } catch (Exception e) {
-                error "GCE deployment failed: ${e.getMessage()}"
+                            // Ensure the container is running
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker ps"
+                        '''
+                        echo 'Deployment to GCE completed'
+                    } catch (Exception e) {
+                        error "GCE deployment failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
     }
-}
-
 
     post {
         success {
