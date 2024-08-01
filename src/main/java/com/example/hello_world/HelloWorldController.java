@@ -11,6 +11,10 @@ public class HelloWorldController {
     public String helloWorld() {
         return "Hello World! today is monday...and ganni and rani..s.ss";
     }
+      @GetMapping("/health")
+    public String healthCheck() {
+        return "Application is running";
+    }
 }
 
 
