@@ -89,7 +89,6 @@ pipeline {
             steps {
                 script {
                     try {
-                        // SSH into the VM and run Docker commands
                         bat '''
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker pull %GCR_IMAGE%:latest"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% %GCR_IMAGE%:latest"
