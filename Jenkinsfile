@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    sh "curl --head ${gitRepoUrl} | grep 'HTTP/'"
                     git url: gitRepoUrl, branch: 'master'
                 }
             }
@@ -28,7 +28,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    bat 'mvn clean package'
+                    sh 'mvn clean package'
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    bat 'mvn test'
+                    sh 'mvn test'
                 }
             }
         }
@@ -46,8 +46,8 @@ pipeline {
                 script {
                     retry(3) {
                         try {
-                            bat 'echo Building Docker image...'
-                            bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
+                            sh 'echo Building Docker image...'
+                            sh "docker build --network=host -t ${IMAGE_NAME}:latest ."
                         } catch (Exception e) {
                             error "Docker build failed: ${e.getMessage()}"
                         }
@@ -60,7 +60,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
+                        sh "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
                         echo 'Docker image saved'
                     } catch (Exception e) {
                         error "Saving Docker image failed: ${e.getMessage()}"
@@ -73,8 +73,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
-                        bat 'gcloud config set project %PROJECT_ID%'
+                        sh 'gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}'
+                        sh 'gcloud config set project ${PROJECT_ID}'
                         echo 'Authenticated with GCP'
                     } catch (Exception e) {
                         error "GCP authentication failed: ${e.getMessage()}"
@@ -87,7 +87,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}"
+                        sh "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}"
                         echo 'VM instance already exists.'
                     } catch (Exception e) {
                         error "VM instance check failed: ${e.getMessage()}"
@@ -100,8 +100,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "set CLOUDSDK_CORE_HTTP_TIMEOUT=600"
-                        bat "gcloud compute scp ${LOCAL_IMAGE_PATH} ${INSTANCE_NAME}:${REMOTE_IMAGE_PATH} --zone=${ZONE} --project=${PROJECT_ID}"
+                        sh "set CLOUDSDK_CORE_HTTP_TIMEOUT=600"
+                        sh "gcloud compute scp ${LOCAL_IMAGE_PATH} ${INSTANCE_NAME}:${REMOTE_IMAGE_PATH} --zone=${ZONE} --project=${PROJECT_ID}"
                         echo 'Docker image transferred to GCE VM'
                     } catch (Exception e) {
                         error "Transferring Docker image failed: ${e.getMessage()}"
@@ -114,8 +114,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"sudo docker load -i ${REMOTE_IMAGE_PATH}\""
-                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"sudo docker run -d -p ${PORT}:${PORT} ${IMAGE_NAME}:latest\""
+                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker load -i ${REMOTE_IMAGE_PATH}'"
+                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker run -d -p ${PORT}:${PORT} ${IMAGE_NAME}:latest'"
                         echo 'Deployment to GCE completed'
                     } catch (Exception e) {
                         error "Deployment on GCE failed: ${e.getMessage()}"
@@ -128,7 +128,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"curl http://localhost:${PORT}\""
+                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'curl http://localhost:${PORT}'"
                         echo 'Application tested successfully'
                     } catch (Exception e) {
                         error "Application testing failed: ${e.getMessage()}"
