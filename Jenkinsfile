@@ -85,11 +85,6 @@ pipeline {
             }
         }
 
-
-
-
-
-  stages {
         stage('Deploy to GCE') {
             steps {
                 script {
@@ -106,7 +101,6 @@ pipeline {
                             // Attempt to SSH and run command
                             sh """
                                 gcloud compute ssh instance-2 --zone=us-central1-c --command "${sshCommand}" --tunnel-through-iap --verbosity=debug
-                               
                             """
                             success = true
                         } catch (Exception e) {
@@ -130,7 +124,6 @@ pipeline {
         }
     }
 
-    
     post {
         success {
             echo 'Pipeline completed successfully!'
