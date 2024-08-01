@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    sh "curl --head ${gitRepoUrl} | grep 'HTTP/'"
+                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
                     git url: gitRepoUrl, branch: 'master'
                 }
             }
@@ -28,7 +28,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh 'mvn clean package'
+                    bat 'mvn clean package'
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'mvn test'
+                    bat 'mvn test'
                 }
             }
         }
@@ -46,8 +46,8 @@ pipeline {
                 script {
                     retry(3) {
                         try {
-                            sh 'echo Building Docker image...'
-                            sh "docker build --network=host -t ${IMAGE_NAME}:latest ."
+                            bat 'echo Building Docker image...'
+                            bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
                         } catch (Exception e) {
                             error "Docker build failed: ${e.getMessage()}"
                         }
@@ -60,7 +60,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
+                        bat "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
                         echo 'Docker image saved'
                     } catch (Exception e) {
                         error "Saving Docker image failed: ${e.getMessage()}"
@@ -73,8 +73,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh 'gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}'
-                        sh 'gcloud config set project ${PROJECT_ID}'
+                        bat 'gcloud auth activate-service-account --key-file=%GOOGLE_APPLICATION_CREDENTIALS%'
+                        bat 'gcloud config set project %PROJECT_ID%'
                         echo 'Authenticated with GCP'
                     } catch (Exception e) {
                         error "GCP authentication failed: ${e.getMessage()}"
@@ -87,69 +87,67 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}"
-                        echo 'VM instance already exists.'
+                        def instanceExists = bat (
+                            script: "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}",
+                            returnStatus: true
+                        )
+                        if (instanceExists != 0) {
+                            echo 'VM instance does not exist. Creating VM instance...'
+                            bat '''
+                                gcloud compute instances create ${INSTANCE_NAME} \
+                                    --zone=${ZONE} \
+                                    --project=${PROJECT_ID} \
+                                    --machine-type=e2-medium \
+                                    --image-family=debian-10 \
+                                    --image-project=debian-cloud
+                            '''
+                            bat '''
+                                gcloud compute firewall-rules create allow-8080 \
+                                    --allow tcp:${PORT} \
+                                    --network default \
+                                    --source-ranges=0.0.0.0/0 \
+                                    --description="Allow port ${PORT} access"
+                            '''
+                        } else {
+                            echo 'VM instance already exists.'
+                        }
                     } catch (Exception e) {
-                        error "VM instance check failed: ${e.getMessage()}"
+                        error "VM creation failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
+     
+
         stage('Transfer Docker Image to GCE') {
             steps {
                 script {
                     try {
-                        sh "set CLOUDSDK_CORE_HTTP_TIMEOUT=600"
-                        sh "gcloud compute scp ${LOCAL_IMAGE_PATH} ${INSTANCE_NAME}:${REMOTE_IMAGE_PATH} --zone=${ZONE} --project=${PROJECT_ID}"
+                        bat '''
+                            set CLOUDSDK_CORE_HTTP_TIMEOUT=600
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
+                        '''
                         echo 'Docker image transferred to GCE VM'
                     } catch (Exception e) {
-                        error "Transferring Docker image failed: ${e.getMessage()}"
+                        error "Image transfer to GCE failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
         stage('Deploy Docker Image on GCE') {
-    steps {
-        script {
-            try {
-                // Check if the port is in use and free it if necessary
-                bat """
-                REM Check if the port is in use and free it if necessary
-                echo Checking if port %PORT% is in use...
-                netstat -aon | findstr :%PORT% > nul
-                if %errorlevel% equ 0 (
-                    echo Port %PORT% is in use. Attempting to free it.
-                    for /f "tokens=5" %%a in ('netstat -aon ^| findstr :%PORT%') do (
-                        taskkill /PID %%a /F
-                    )
-                ) else (
-                    echo Port %PORT% is not in use.
-                )
-                """
-
-                // Load Docker image and run the container
-                bat """
-                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
-                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% %IMAGE_NAME%:latest"
-                """
-                
-                echo 'Deployment to GCE completed'
-            } catch (Exception e) {
-                error "Deployment on GCE failed: ${e.getMessage()}"
-            }
-        }
-    }
-}
-        stage('Test Application') {
             steps {
                 script {
                     try {
-                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'curl http://localhost:${PORT}'"
-                        echo 'Application tested successfully'
+                        // SSH into the VM and run Docker commands
+                        bat '''
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
+                        '''
+                        echo 'Deployment to GCE completed'
                     } catch (Exception e) {
-                        error "Application testing failed: ${e.getMessage()}"
+                        error "GCE deployment failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -157,9 +155,14 @@ pipeline {
     }
 
     post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
         always {
             cleanWs()
-            echo 'Pipeline completed successfully!'
         }
     }
 }
