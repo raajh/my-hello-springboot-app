@@ -8,7 +8,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
         INSTANCE_NAME = 'instance-2' // replace with your instance name
-        ZONE = 'us-central1-c' // replace with your GCE zone
+        ZONE = 'us-central1-b' // replace with your GCE zone
         PORT = '8080' // replace with your application's port
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
