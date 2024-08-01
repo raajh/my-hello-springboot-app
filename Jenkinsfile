@@ -19,8 +19,9 @@ pipeline {
         stage('Pre-check Network Connectivity') {
             steps {
                 script {
-                    def responseCode = bat(returnStatus: true, script: "curl -s -o /dev/null -w \"%{http_code}\" ${GIT_REPO_URL}")
-                    if (responseCode != 200) {
+                    def curlCommand = "curl -s -o /dev/null -w \"%{http_code}\" ${GIT_REPO_URL}"
+                    def responseCode = bat(returnStdout: true, script: curlCommand).trim()
+                    if (responseCode != '200') {
                         error "Unable to reach GitHub. Status code: ${responseCode}"
                     }
                 }
@@ -142,5 +143,3 @@ pipeline {
         always {
             cleanWs()
         }
-    }
-}
