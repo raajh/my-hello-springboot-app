@@ -151,12 +151,24 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop \$(sudo docker ps -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm \$(sudo docker ps -a -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:${TAG_NAME}"
-                        '''
+                        echo 'Starting deployment to GCE...'
+                        
+                        // Load Docker image
+                        def loadImageOutput = bat(script: "gcloud compute ssh ${env.INSTANCE_NAME} --zone=${env.ZONE} --command \"sudo docker load -i ${env.REMOTE_IMAGE_PATH}\"", returnStdout: true).trim()
+                        echo "Docker image load output: ${loadImageOutput}"
+                        
+                        // Stop old containers
+                        def stopContainersOutput = bat(script: "gcloud compute ssh ${env.INSTANCE_NAME} --zone=${env.ZONE} --command \"sudo docker stop \$(sudo docker ps -q) || true\"", returnStdout: true).trim()
+                        echo "Docker stop containers output: ${stopContainersOutput}"
+                        
+                        // Remove old containers
+                        def removeContainersOutput = bat(script: "gcloud compute ssh ${env.INSTANCE_NAME} --zone=${env.ZONE} --command \"sudo docker rm \$(sudo docker ps -a -q) || true\"", returnStdout: true).trim()
+                        echo "Docker remove containers output: ${removeContainersOutput}"
+                        
+                        // Run new container
+                        def runContainerOutput = bat(script: "gcloud compute ssh ${env.INSTANCE_NAME} --zone=${env.ZONE} --command \"sudo docker run -d -p ${env.PORT}:${env.PORT} ${env.IMAGE_NAME}:${env.TAG_NAME}\"", returnStdout: true).trim()
+                        echo "Docker run container output: ${runContainerOutput}"
+                        
                         echo 'Deployment to GCE completed'
                     } catch (Exception e) {
                         error "GCE deployment failed: ${e.getMessage()}"
