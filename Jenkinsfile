@@ -13,6 +13,8 @@ pipeline {
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
         PUBLIC_IP = '34.132.144.80' // Public IP for testing
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        TAG_NAME = "v${BUILD_NUMBER}"
     }
 
     stages {
@@ -57,7 +59,7 @@ pipeline {
                     retry(3) {
                         try {
                             echo 'Building Docker image...'
-                            bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
+                            bat "docker build --network=host -t ${IMAGE_NAME}:${TAG_NAME} ."
                             bat "docker images ${IMAGE_NAME} --format '{{.Tag}}'"
                         } catch (Exception e) {
                             error "Docker build failed: ${e.getMessage()}"
@@ -71,7 +73,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        bat "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:latest"
+                        bat "docker save -o ${LOCAL_IMAGE_PATH} ${IMAGE_NAME}:${TAG_NAME}"
                         echo 'Docker image saved'
                     } catch (Exception e) {
                         error "Saving Docker image failed: ${e.getMessage()}"
@@ -153,7 +155,7 @@ pipeline {
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop \$(sudo docker ps -q) || true"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm \$(sudo docker ps -a -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:${TAG_NAME}"
                         '''
                         echo 'Deployment to GCE completed'
                     } catch (Exception e) {
