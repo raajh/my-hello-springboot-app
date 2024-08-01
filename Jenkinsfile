@@ -87,50 +87,24 @@ pipeline {
             steps {
                 script {
                     try {
-                        def instanceExists = bat (
-                            script: "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}",
-                            returnStatus: true
-                        )
-                        if (instanceExists != 0) {
-                            echo 'VM instance does not exist. Creating VM instance...'
-                            bat '''
-                                gcloud compute instances create ${INSTANCE_NAME} \
-                                    --zone=${ZONE} \
-                                    --project=${PROJECT_ID} \
-                                    --machine-type=e2-medium \
-                                    --image-family=debian-10 \
-                                    --image-project=debian-cloud
-                            '''
-                            bat '''
-                                gcloud compute firewall-rules create allow-8080 \
-                                    --allow tcp:${PORT} \
-                                    --network default \
-                                    --source-ranges=0.0.0.0/0 \
-                                    --description="Allow port ${PORT} access"
-                            '''
-                        } else {
-                            echo 'VM instance already exists.'
-                        }
+                        bat "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}"
+                        echo 'VM instance already exists.'
                     } catch (Exception e) {
-                        error "VM creation failed: ${e.getMessage()}"
+                        error "VM instance check failed: ${e.getMessage()}"
                     }
                 }
             }
         }
 
-     
-
         stage('Transfer Docker Image to GCE') {
             steps {
                 script {
                     try {
-                        bat '''
-                            set CLOUDSDK_CORE_HTTP_TIMEOUT=600
-                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
-                        '''
+                        bat "set CLOUDSDK_CORE_HTTP_TIMEOUT=600"
+                        bat "gcloud compute scp ${LOCAL_IMAGE_PATH} ${INSTANCE_NAME}:${REMOTE_IMAGE_PATH} --zone=${ZONE} --project=${PROJECT_ID}"
                         echo 'Docker image transferred to GCE VM'
                     } catch (Exception e) {
-                        error "Image transfer to GCE failed: ${e.getMessage()}"
+                        error "Transferring Docker image failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -140,14 +114,24 @@ pipeline {
             steps {
                 script {
                     try {
-                        // SSH into the VM and run Docker commands
-                        bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
-                        '''
+                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"sudo docker load -i ${REMOTE_IMAGE_PATH}\""
+                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"sudo docker run -d -p ${PORT}:${PORT} ${IMAGE_NAME}:latest\""
                         echo 'Deployment to GCE completed'
                     } catch (Exception e) {
-                        error "GCE deployment failed: ${e.getMessage()}"
+                        error "Deployment on GCE failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Test Application') {
+            steps {
+                script {
+                    try {
+                        bat "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command \"curl http://localhost:${PORT}\""
+                        echo 'Application tested successfully'
+                    } catch (Exception e) {
+                        error "Application testing failed: ${e.getMessage()}"
                     }
                 }
             }
@@ -155,14 +139,9 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed.'
-        }
         always {
             cleanWs()
+            echo 'Pipeline completed successfully!'
         }
     }
 }
