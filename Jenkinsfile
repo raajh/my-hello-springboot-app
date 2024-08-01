@@ -88,32 +88,22 @@ pipeline {
         stage('Deploy to GCE') {
             steps {
                 script {
-                    // Define SSH command
                     def sshCommand = "sudo docker pull gcr.io/ds-ms-microservices/my-spring-boot-app:latest"
-
-                    // Define the number of retries
                     def maxRetries = 3
                     def retryCount = 0
                     def success = false
 
                     while (retryCount < maxRetries && !success) {
                         try {
-                            // Attempt to SSH and run command
-                            sh """
-                                gcloud compute ssh instance-2 --zone=us-central1-c --command "${sshCommand}" --tunnel-through-iap --verbosity=debug
+                            bat """
+                                gcloud compute ssh instance-2 --zone=%ZONE% --command "${sshCommand}" --tunnel-through-iap --verbosity=debug
                             """
                             success = true
                         } catch (Exception e) {
-                            // Print error message
                             echo "Failed to execute command: ${e.message}"
-
-                            // Increment retry count
                             retryCount++
-
-                            // Wait before retrying
                             sleep time: 30, unit: 'SECONDS'
 
-                            // If max retries reached, throw an exception
                             if (retryCount >= maxRetries) {
                                 error "Deployment failed after ${maxRetries} attempts."
                             }
