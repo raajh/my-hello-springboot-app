@@ -131,22 +131,6 @@ pipeline {
         }
     }
 
-    post {
-        failure {
-            // Additional failure handling if needed
-            echo "Deployment failed."
-        }
-    }
-
-
-
-
-
-
-
-
-
-
     
     post {
         success {
