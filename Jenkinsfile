@@ -19,7 +19,10 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    git url: gitRepoUrl, branch: 'master'
+                    retry(3) {
+                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                        git url: gitRepoUrl, branch: 'master'
+                    }
                 }
             }
         }
@@ -87,6 +90,7 @@ pipeline {
                 script {
                     try {
                         bat '''
+                            echo "Transferring Docker image to GCE..."
                             gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
                         '''
                         echo 'Docker image transferred to GCE VM'
@@ -103,6 +107,7 @@ pipeline {
                     try {
                         // SSH into the VM and run Docker commands
                         bat '''
+                            echo "Deploying Docker image on GCE..."
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
