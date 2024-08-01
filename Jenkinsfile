@@ -19,10 +19,8 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    retry(3) {
-                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                        git url: gitRepoUrl, branch: 'master'
-                    }
+                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    git url: gitRepoUrl, branch: 'master'
                 }
             }
         }
@@ -85,29 +83,34 @@ pipeline {
             }
         }
 
-        stage('Transfer Docker Image to GCE') {
-            steps {
-                script {
-                    try {
-                        bat '''
-                            echo "Transferring Docker image to GCE..."
-                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
-                        '''
-                        echo 'Docker image transferred to GCE VM'
-                    } catch (Exception e) {
-                        error "Image transfer to GCE failed: ${e.getMessage()}"
-                    }
-                }
+
+
+stage('Transfer Docker Image to GCE') {
+    steps {
+        script {
+            try {
+                bat '''
+                    set CLOUDSDK_CORE_HTTP_TIMEOUT=600
+                    gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
+                '''
+                echo 'Docker image transferred to GCE VM'
+            } catch (Exception e) {
+                error "Image transfer to GCE failed: ${e.getMessage()}"
             }
         }
+    }
+}
 
+
+
+
+        
         stage('Deploy Docker Image on GCE') {
             steps {
                 script {
                     try {
                         // SSH into the VM and run Docker commands
                         bat '''
-                            echo "Deploying Docker image on GCE..."
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
