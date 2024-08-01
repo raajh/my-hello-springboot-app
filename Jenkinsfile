@@ -111,29 +111,37 @@ pipeline {
         }
 
         stage('Deploy Docker Image on GCE') {
-            steps {
-                script {
-                    try {
-                        // Check if the port is in use and free it if necessary
-                        sh """
-                        gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command '
-                        if sudo lsof -i:${PORT}; then
-                            echo "Port ${PORT} is in use. Attempting to free it."
-                            sudo fuser -k ${PORT}/tcp || true
-                        fi
-                        '"""
-                        
-                        // Load Docker image and run the container
-                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker load -i ${REMOTE_IMAGE_PATH}'"
-                        sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker run -d -p ${PORT}:${PORT} ${IMAGE_NAME}:latest'"
-                        echo 'Deployment to GCE completed'
-                    } catch (Exception e) {
-                        error "Deployment on GCE failed: ${e.getMessage()}"
-                    }
-                }
+    steps {
+        script {
+            try {
+                // Check if the port is in use and free it if necessary
+                bat """
+                REM Check if the port is in use and free it if necessary
+                echo Checking if port %PORT% is in use...
+                netstat -aon | findstr :%PORT% > nul
+                if %errorlevel% equ 0 (
+                    echo Port %PORT% is in use. Attempting to free it.
+                    for /f "tokens=5" %%a in ('netstat -aon ^| findstr :%PORT%') do (
+                        taskkill /PID %%a /F
+                    )
+                ) else (
+                    echo Port %PORT% is not in use.
+                )
+                """
+
+                // Load Docker image and run the container
+                bat """
+                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
+                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% %IMAGE_NAME%:latest"
+                """
+                
+                echo 'Deployment to GCE completed'
+            } catch (Exception e) {
+                error "Deployment on GCE failed: ${e.getMessage()}"
             }
         }
-
+    }
+}
         stage('Test Application') {
             steps {
                 script {
