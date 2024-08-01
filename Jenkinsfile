@@ -8,7 +8,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
         INSTANCE_NAME = 'instance-2' // replace with your instance name
-        ZONE = 'us-central1-c' // replace with your GCE zone
+        ZONE = 'us-central1-b' // replace with your GCE zone
         PORT = '8080' // replace with your application's port
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
@@ -88,7 +88,7 @@ pipeline {
                 script {
                     try {
                         def instanceExists = bat (
-                            script: "gcloud compute instances list --filter=\"name=${INSTANCE_NAME}\" --zones=${ZONE} --project=${PROJECT_ID} --format=\"get(name)\"",
+                            script: "gcloud compute instances describe ${INSTANCE_NAME} --zone=${ZONE} --project=${PROJECT_ID}",
                             returnStatus: true
                         )
                         if (instanceExists != 0) {
@@ -97,15 +97,15 @@ pipeline {
                                 gcloud compute instances create ${INSTANCE_NAME} \
                                     --zone=${ZONE} \
                                     --project=${PROJECT_ID} \
-                                    --machine-type=e2-micro \
+                                    --machine-type=e2-medium \
                                     --image-family=debian-10 \
                                     --image-project=debian-cloud
                             '''
                             bat '''
                                 gcloud compute firewall-rules create allow-8080 \
                                     --allow tcp:${PORT} \
+                                    --network default \
                                     --source-ranges=0.0.0.0/0 \
-                                    --target-tags=http-server \
                                     --description="Allow port ${PORT} access"
                             '''
                         } else {
@@ -113,6 +113,22 @@ pipeline {
                         }
                     } catch (Exception e) {
                         error "VM creation failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Install Docker on VM') {
+            steps {
+                script {
+                    try {
+                        echo 'Installing Docker on VM...'
+                        bat '''
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+                        '''
+                        echo 'Docker installed on VM'
+                    } catch (Exception e) {
+                        error "Docker installation failed: ${e.getMessage()}"
                     }
                 }
             }
