@@ -7,11 +7,12 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        INSTANCE_NAME = 'instance-2' // replace with your instance name
-        ZONE = 'us-central1-b' // replace with your GCE zone
-        PORT = '8080' // replace with your application's port
+        INSTANCE_NAME = 'instance-2'
+        ZONE = 'us-central1-b'
+        PORT = '8080'
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
+        PUBLIC_IP = '34.132.144.80' // Public IP for testing
     }
 
     stages {
@@ -118,8 +119,6 @@ pipeline {
             }
         }
 
-     
-
         stage('Transfer Docker Image to GCE') {
             steps {
                 script {
@@ -140,9 +139,10 @@ pipeline {
             steps {
                 script {
                     try {
-                        // SSH into the VM and run Docker commands
                         bat '''
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop $(sudo docker ps -q) || true"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm $(sudo docker ps -a -q) || true"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
                         echo 'Deployment to GCE completed'
