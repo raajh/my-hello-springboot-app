@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    echo "Checking GitHub repository: ${gitRepoUrl}"
                     git url: gitRepoUrl, branch: 'master'
                     bat 'git rev-parse HEAD'
                 }
@@ -56,7 +56,7 @@ pipeline {
                 script {
                     retry(3) {
                         try {
-                            bat 'echo Building Docker image...'
+                            echo 'Building Docker image...'
                             bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
                             bat "docker images ${IMAGE_NAME} --format '{{.Tag}}'"
                         } catch (Exception e) {
@@ -151,8 +151,8 @@ pipeline {
                     try {
                         bat '''
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop $(sudo docker ps -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm $(sudo docker ps -a -q) || true"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop \$(sudo docker ps -q) || true"
+                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm \$(sudo docker ps -a -q) || true"
                             gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
                         '''
                         echo 'Deployment to GCE completed'
@@ -167,6 +167,9 @@ pipeline {
     post {
         success {
             echo 'Pipeline completed successfully!'
+            script {
+                echo "Check the deployed application at: http://${PUBLIC_IP}:${PORT}/health"
+            }
         }
         failure {
             echo 'Pipeline failed.'
