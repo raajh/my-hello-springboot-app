@@ -12,31 +12,16 @@ pipeline {
         PORT = '8080' // replace with your application's port
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
-        GIT_REPO_URL = 'https://github.com/raajh/my-hello-springboot-app.git'
     }
 
     stages {
-        stage('Pre-check Network Connectivity') {
-            steps {
-                script {
-                    def curlCommand = "curl -s -o /dev/null -w \"%{http_code}\" ${GIT_REPO_URL}"
-                    def responseCode = bat(returnStdout: true, script: curlCommand).trim()
-                    if (responseCode != '200') {
-                        error "Unable to reach GitHub. Status code: ${responseCode}"
-                    }
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
                 script {
+                    def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
                     retry(3) {
-                        def statusCode = bat(returnStatus: true, script: "curl --head ${GIT_REPO_URL} | findstr /R /C:\"HTTP/\"")
-                        if (statusCode != 0) {
-                            error "GitHub repository is not accessible. Status code: ${statusCode}"
-                        }
-                        git url: GIT_REPO_URL, branch: 'master'
+                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                        git url: gitRepoUrl, branch: 'master'
                     }
                 }
             }
