@@ -33,11 +33,11 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build --network=host -t ${IMAGE_NAME}:latest ."
-            }
-        }
+     stage('Build Docker Image') {
+    steps {
+        bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
+    }
+}
 
         stage('Tag and Push Docker Image') {
             steps {
