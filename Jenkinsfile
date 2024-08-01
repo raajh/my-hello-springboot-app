@@ -19,7 +19,6 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
                     git url: gitRepoUrl, branch: 'master'
                 }
             }
