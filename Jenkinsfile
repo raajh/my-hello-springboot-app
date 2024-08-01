@@ -118,21 +118,7 @@ pipeline {
             }
         }
 
-        stage('Install Docker on VM') {
-            steps {
-                script {
-                    try {
-                        echo 'Installing Docker on VM...'
-                        bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
-                        '''
-                        echo 'Docker installed on VM'
-                    } catch (Exception e) {
-                        error "Docker installation failed: ${e.getMessage()}"
-                    }
-                }
-            }
-        }
+     
 
         stage('Transfer Docker Image to GCE') {
             steps {
