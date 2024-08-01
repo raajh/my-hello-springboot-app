@@ -8,7 +8,7 @@ public class HelloWorldController {
 
     @GetMapping("/")
     public String helloWorld() {
-        return "Hello World! today is monday... and tuesday..ggg.and wednesssjjdayss.aa.ffg.dddaaddsssswwffdd andss thursdayeee ghhhhnj";
+        return "Hello World! today is monday... and tuesday.ss.ggg.and wednesssjjdayss.aa.ffg.dddaaddsssswwffdd andss thursdayeee ghhhhnj";
     }
 }
 
