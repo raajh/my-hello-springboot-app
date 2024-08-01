@@ -22,6 +22,15 @@ pipeline {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
                     bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
                     git url: gitRepoUrl, branch: 'master'
+                    bat 'git rev-parse HEAD'
+                }
+            }
+        }
+
+        stage('List Files') {
+            steps {
+                script {
+                    bat 'dir'
                 }
             }
         }
@@ -49,6 +58,7 @@ pipeline {
                         try {
                             bat 'echo Building Docker image...'
                             bat "docker build --network=host -t ${IMAGE_NAME}:latest ."
+                            bat "docker images ${IMAGE_NAME} --format '{{.Tag}}'"
                         } catch (Exception e) {
                             error "Docker build failed: ${e.getMessage()}"
                         }
