@@ -83,28 +83,57 @@ pipeline {
             }
         }
 
-
-
-stage('Transfer Docker Image to GCE') {
-    steps {
-        script {
-            try {
-                bat '''
-                    set CLOUDSDK_CORE_HTTP_TIMEOUT=600
-                    gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
-                '''
-                echo 'Docker image transferred to GCE VM'
-            } catch (Exception e) {
-                error "Image transfer to GCE failed: ${e.getMessage()}"
+        stage('Ensure VM Exists') {
+            steps {
+                script {
+                    try {
+                        def instanceExists = bat (
+                            script: "gcloud compute instances list --filter=\"name=${INSTANCE_NAME}\" --zones=${ZONE} --project=${PROJECT_ID} --format=\"get(name)\"",
+                            returnStatus: true
+                        )
+                        if (instanceExists != 0) {
+                            echo 'VM instance does not exist. Creating VM instance...'
+                            bat '''
+                                gcloud compute instances create ${INSTANCE_NAME} \
+                                    --zone=${ZONE} \
+                                    --project=${PROJECT_ID} \
+                                    --machine-type=e2-micro \
+                                    --image-family=debian-10 \
+                                    --image-project=debian-cloud
+                            '''
+                            bat '''
+                                gcloud compute firewall-rules create allow-8080 \
+                                    --allow tcp:${PORT} \
+                                    --source-ranges=0.0.0.0/0 \
+                                    --target-tags=http-server \
+                                    --description="Allow port ${PORT} access"
+                            '''
+                        } else {
+                            echo 'VM instance already exists.'
+                        }
+                    } catch (Exception e) {
+                        error "VM creation failed: ${e.getMessage()}"
+                    }
+                }
             }
         }
-    }
-}
 
+        stage('Transfer Docker Image to GCE') {
+            steps {
+                script {
+                    try {
+                        bat '''
+                            set CLOUDSDK_CORE_HTTP_TIMEOUT=600
+                            gcloud compute scp %LOCAL_IMAGE_PATH% %INSTANCE_NAME%:%REMOTE_IMAGE_PATH% --zone=%ZONE% --project=%PROJECT_ID%
+                        '''
+                        echo 'Docker image transferred to GCE VM'
+                    } catch (Exception e) {
+                        error "Image transfer to GCE failed: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
 
-
-
-        
         stage('Deploy Docker Image on GCE') {
             steps {
                 script {
