@@ -1,4 +1,4 @@
-pipeline {
+ pipeline {
     agent any
 
     environment {
@@ -19,10 +19,8 @@ pipeline {
             steps {
                 script {
                     def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    retry(3) {
-                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                        git url: gitRepoUrl, branch: 'master'
-                    }
+                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                    git url: gitRepoUrl, branch: 'master'
                 }
             }
         }
@@ -129,4 +127,3 @@ pipeline {
             cleanWs()
         }
     }
-}
