@@ -106,8 +106,7 @@ pipeline {
                             // Attempt to SSH and run command
                             sh """
                                 gcloud compute ssh instance-2 --zone=us-central1-c --command "${sshCommand}" --tunnel-through-iap --verbosity=debug
-                                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker pull %GCR_IMAGE%:latest"
-                                gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% %GCR_IMAGE%:latest"
+                               
                             """
                             success = true
                         } catch (Exception e) {
