@@ -114,6 +114,16 @@ pipeline {
             steps {
                 script {
                     try {
+                        // Check if the port is in use and free it if necessary
+                        sh """
+                        gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command '
+                        if sudo lsof -i:${PORT}; then
+                            echo "Port ${PORT} is in use. Attempting to free it."
+                            sudo fuser -k ${PORT}/tcp || true
+                        fi
+                        '"""
+                        
+                        // Load Docker image and run the container
                         sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker load -i ${REMOTE_IMAGE_PATH}'"
                         sh "gcloud compute ssh ${INSTANCE_NAME} --zone=${ZONE} --command 'sudo docker run -d -p ${PORT}:${PORT} ${IMAGE_NAME}:latest'"
                         echo 'Deployment to GCE completed'
