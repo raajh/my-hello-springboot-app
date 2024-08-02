@@ -150,19 +150,19 @@ pipeline {
                 script {
                     try {
                         // Load Docker image
-                        def loadImageOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker load -i %REMOTE_IMAGE_PATH%'", returnStdout: true).trim()
+                        def loadImageOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command \"sudo docker load -i %REMOTE_IMAGE_PATH%\"", returnStdout: true).trim()
                         echo "Docker image load output:\n${loadImageOutput}"
 
                         // Stop existing containers
-                        def stopContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker stop \$(sudo docker ps -q) || true'", returnStdout: true).trim()
+                        def stopContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command \"sudo docker stop \$(sudo docker ps -q) || true\"", returnStdout: true).trim()
                         echo "Stop containers output:\n${stopContainersOutput}"
 
                         // Remove stopped containers
-                        def removeContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker rm \$(sudo docker ps -a -q) || true'", returnStdout: true).trim()
+                        def removeContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command \"sudo docker rm \$(sudo docker ps -a -q) || true\"", returnStdout: true).trim()
                         echo "Remove containers output:\n${removeContainersOutput}"
 
                         // Run new container
-                        def runContainerOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest'", returnStdout: true).trim()
+                        def runContainerOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command \"sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest\"", returnStdout: true).trim()
                         echo "Run container output:\n${runContainerOutput}"
 
                         echo 'Deployment to GCE completed'
