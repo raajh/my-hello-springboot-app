@@ -144,32 +144,40 @@ pipeline {
                 }
             }
         }
+stage('Deploy Docker Image on GCE') {
+    steps {
+        script {
+            try {
+                // Load Docker image
+                def loadImageOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker load -i %REMOTE_IMAGE_PATH%'", returnStdout: true).trim()
+                echo "Docker image load output:\n${loadImageOutput}"
 
-        stage('Deploy Docker Image on GCE') {
-            steps {
-                script {
-                    try {
-                        bat '''
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker load -i %REMOTE_IMAGE_PATH%"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker stop $(sudo docker ps -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker rm $(sudo docker ps -a -q) || true"
-                            gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command "sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest"
-                        '''
-                        echo 'Deployment to GCE completed'
-                    } catch (Exception e) {
-                        error "GCE deployment failed: ${e.getMessage()}"
-                    }
-                }
+                // Stop existing containers
+                def stopContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker stop \$(sudo docker ps -q) || true'", returnStdout: true).trim()
+                echo "Stop containers output:\n${stopContainersOutput}"
+
+                // Remove stopped containers
+                def removeContainersOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker rm \$(sudo docker ps -a -q) || true'", returnStdout: true).trim()
+                echo "Remove containers output:\n${removeContainersOutput}"
+
+                // Run new container
+                def runContainerOutput = bat(script: "gcloud compute ssh %INSTANCE_NAME% --zone=%ZONE% --command 'sudo docker run -d -p %PORT%:%PORT% ${IMAGE_NAME}:latest'", returnStdout: true).trim()
+                echo "Run container output:\n${runContainerOutput}"
+
+                echo 'Deployment to GCE completed'
+            } catch (Exception e) {
+                error "GCE deployment failed: ${e.getMessage()}"
             }
         }
     }
+}
 
     post {
         success {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed.'
+            echo 'Pipeline failed.
         }
         always {
             cleanWs()
