@@ -9,7 +9,7 @@ public class HelloWorldController {
     @GetMapping("/")
 
     public String helloWorld() {
-        return "Hello World! today is monday....daassad";
+        return "Hello World! today is monday....daasaasad";
     }
       @GetMapping("/health")
     public String healthCheck() {
