@@ -12,17 +12,19 @@ pipeline {
         PORT = '8080'
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
-        PUBLIC_IP = '34.132.144.80' // Public IP for testing
+        PUBLIC_IP = '34.134.194.220' // Public IP for testing
     }
 
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                    bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                    git url: gitRepoUrl, branch: 'master'
-                    bat 'git rev-parse HEAD'
+                retry(3) {
+                    script {
+                        def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
+                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                        git url: gitRepoUrl, branch: 'master'
+                        bat 'git rev-parse HEAD'
+                    }
                 }
             }
         }
