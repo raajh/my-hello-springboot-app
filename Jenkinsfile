@@ -15,18 +15,19 @@ pipeline {
         PUBLIC_IP = '34.134.194.220' // Public IP for testing
     }
 
-stage('Checkout') {
-    steps {
-        retry(3) {
-            script {
-                def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
-                bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                git url: gitRepoUrl, branch: 'master'
-                bat 'git rev-parse HEAD'
+    stages {
+        stage('Checkout') {
+            steps {
+                retry(3) {
+                    script {
+                        def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
+                        bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
+                        git url: gitRepoUrl, branch: 'master'
+                        bat 'git rev-parse HEAD'
+                    }
+                }
             }
         }
-    }
-}
 
         stage('List Files') {
             steps {
