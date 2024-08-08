@@ -12,7 +12,7 @@ pipeline {
         PORT = '8080'
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
-        PUBLIC_IP = '34.134.194.220' // Public IP for testing
+        PUBLIC_IP = '34.172.201.30' // Public IP for testing
     }
 
     stages {
