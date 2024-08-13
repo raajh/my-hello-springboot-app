@@ -5,7 +5,7 @@ FROM adoptopenjdk:11-jre-hotspot
 WORKDIR /app
 
 # Copy the packaged jar file into the container
-COPY target/hello-world-0.0.1-SNAPSHOT.jar app.jar
+COPY target/us-apigateway-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose the port that your Spring Boot application uses (default is 8080)
 EXPOSE 8080
