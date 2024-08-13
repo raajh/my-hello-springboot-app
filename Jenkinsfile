@@ -9,7 +9,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
         INSTANCE_NAME = 'instance-2'
         ZONE = 'us-central1-c'
-        PORT = '8080'
+        PORT = '4444'
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
         PUBLIC_IP = '34.172.201.30' // Public IP for testing
