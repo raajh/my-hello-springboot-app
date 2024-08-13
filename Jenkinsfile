@@ -7,7 +7,7 @@ pipeline {
         IMAGE_NAME = 'my-spring-boot-app'
         DOCKERHUB_USERNAME = 'ganshekar'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        INSTANCE_NAME = 'instance-2'
+        INSTANCE_NAME = 'demo-app'
         ZONE = 'us-central1-c'
         PORT = '4444'
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
