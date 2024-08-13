@@ -13,6 +13,7 @@ pipeline {
         LOCAL_IMAGE_PATH = 'my-spring-boot-app.tar'
         REMOTE_IMAGE_PATH = '/tmp/my-spring-boot-app.tar'
         PUBLIC_IP = '34.172.201.30' // Public IP for testing
+        GITHUB_CREDENTIALS_ID = 'github-pat'
     }
 
     stages {
@@ -22,7 +23,7 @@ pipeline {
                     script {
                         def gitRepoUrl = 'https://github.com/raajh/my-hello-springboot-app.git'
                         bat "curl --head ${gitRepoUrl} | findstr /R /C:\"HTTP/\""
-                        git url: gitRepoUrl, branch: 'master'
+                        git url: gitRepoUrl, branch: 'master', credentialsId: "${GITHUB_CREDENTIALS_ID}"
                         bat 'git rev-parse HEAD'
                     }
                 }
